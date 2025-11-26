@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 2em auto;
+      padding: 1em;
+      background: #000;
+      border-radius: 8px
+      color #fff;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1em;
+      color: #fff;
+    }
+    #forecast {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      margin-top: 10px;
+    }
+    .day {
+      background: #23272f;
+      border: 2px solid #444b54;
+      border-radius: 8px;
+      padding: 15px 20px;
+      box-shadow: 0 4px 8px rgba(52, 152, 219, 0.2);
+      transition: box-shadow 0.3s ease;
+      flex: 1;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      color: #fff;
+    }
+    .day:hover {
+      box-shadow: 0 8px 16px rgba(52, 152, 219, 0.4);
+      border-color: #2980b9;
+      background: #171a1f
+    }
+    .date {
+      font-weight: bold;
+      font-size: 1.1em;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+    .temps {
+      font-size: 1em;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h2>Lolo Hot Springs, MT 5-Day Temperature Forecast</h2>
+  <div id="forecast">Loading forecast...</div>
+
+  <script>
+    const lat = 46.728;
+    const lon = -114.531;
+    const apiKey = "cc57dac31254614f27bc09ec12cb2bcb";
+
+    fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=imperial&appid=${apiKey}`)
+      .then(response => {
+        if (!response.ok) throw new Error("API error: " + response.status);
+        return response.json();
+      })
+      .then(data => {
+        const dailyTemps = {};
+        data.list.forEach(entry => {
+          const date = entry.dt_txt.split(' ')[0];
+          if (!dailyTemps[date]) dailyTemps[date] = [];
+          dailyTemps[date].push(entry.main.temp);
+        });
+
+        const forecastDiv = document.getElementById("forecast");
+        forecastDiv.innerHTML = "";
+
+        const dates = Object.keys(dailyTemps).sort().slice(0, 5);
+
+        // Use this OpenWeatherMap city link for nearby Missoula (city ID 5666639)
+        const link = "https://openweathermap.org/city/5666639";
+
+        dates.forEach(date => {
+          const temps = dailyTemps[date];
+          const minTemp = Math.min(...temps).toFixed(1);
+          const maxTemp = Math.max(...temps).toFixed(1);
+
+          const options = { weekday: 'short', month: 'short', day: 'numeric' };
+          const formattedDate = new Date(date).toLocaleDateString(undefined, options);
+
+          const dayDiv = document.createElement('a');
+          dayDiv.className = 'day';
+          dayDiv.href = link;
+          dayDiv.target = '_blank';
+          dayDiv.rel = 'noopener noreferrer';
+
+          dayDiv.innerHTML = `
+            <div class="date">${formattedDate}</div>
+            <div class="temps">Low: ${minTemp}°F<br>High: ${maxTemp}°F</div>
+            <div style="margin-top:10px; font-size:0.9em; color:#fff;">View full forecast &raquo;</div>
+          `;
+
+          forecastDiv.appendChild(dayDiv);
+        });
+      })
+      .catch(err => {
+        document.getElementById("forecast").innerHTML = `<div style="color:red;">Error loading forecast: ${err.message}</div>`;
+        console.error(err);
+      });
+  </script>
+</body>
+
+</html>
